@@ -1,776 +1,127 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="x5-orientation" content="landscape">
-<meta name="screen-orientation" content="landscape">
-<meta name="theme-color" content="#0b0e12">
-<title>Mystery Detective &amp; Horror Quest</title>
-<style>
-:root {
-  --bg: #0b0e12;
-  --ink: #080a0d;
-  --slate-1: #171d24;
-  --slate-2: #1f2831;
-  --slate-3: #2b3642;
-  --panel: rgba(20, 26, 33, 0.94);
-  --panel-2: #27313c;
-  --line: rgba(214, 190, 150, 0.16);
-  --text: #eee6d3;
-  --muted: #9aa3ab;
-  --brass: #d4a24c;
-  --brass-hi: #f0cf8a;
-  --brass-lo: #8f6522;
-  --accent: #d4a24c;
-  --accent-2: #e2623a;
-  --good: #6fc2a4;
-  --shard: #7fd6e8;
-  --sat: env(safe-area-inset-top, 0px);
-  --sar: env(safe-area-inset-right, 0px);
-  --sab: env(safe-area-inset-bottom, 0px);
-  --sal: env(safe-area-inset-left, 0px);
-  --pad: 14px;
-  --serif: "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
-  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .9 0 0 0 0 .85 0 0 0 0 .75 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.1'/%3E%3C/svg%3E");
-}
-
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
-html, body {
-  margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-  background: var(--bg); color: var(--text); font-family: var(--sans);
-  -webkit-user-select: none; user-select: none; overscroll-behavior: none;
-}
-#app { position: fixed; inset: 0; width: 100%; height: 100vh; height: 100dvh; overflow: hidden; }
-#stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
-.hidden { display: none !important; }
-svg { display: block; }
-:focus-visible { outline: 2px solid var(--brass-hi); outline-offset: 2px; }
-
-/* ---------- Buttons ---------- */
-button { font-family: inherit; color: inherit; border: 0; cursor: pointer; touch-action: manipulation; }
-.btn {
-  min-height: 44px; padding: 10px 18px; border-radius: 10px; font-weight: 700; font-size: 15px; white-space: nowrap;
-  background: linear-gradient(180deg, var(--slate-3), var(--slate-2)); border: 1px solid rgba(0,0,0,.55);
-  box-shadow: inset 0 1px 0 rgba(255,230,180,.14), 0 2px 0 rgba(0,0,0,.5);
-  transition: transform .08s ease, filter .15s ease;
-}
-.btn:active { transform: translateY(1px) scale(.975); }
-.btn.primary {
-  background: linear-gradient(180deg, #e8bb66, #b98027); color: #1e1304; border-color: #5a3b0b;
-  text-shadow: 0 1px 0 rgba(255,236,190,.5);
-  box-shadow: inset 0 1px 0 rgba(255,244,214,.6), 0 3px 0 #6b4812, 0 8px 18px rgba(212,162,76,.2);
-}
-.btn.danger { background: linear-gradient(180deg, #d9674f, #a8321f); border-color: #4a120a; color: #fff3ec; }
-.btn.small { min-height: 36px; padding: 6px 12px; font-size: 13px; }
-.btn:disabled, .btn.disabled { opacity: .45; filter: grayscale(.6); pointer-events: none; }
-
-/* ---------- Lobby HUD ---------- */
-#hud { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
-#hud > * { pointer-events: auto; }
-#hud-top {
-  position: absolute; top: calc(var(--sat) + 10px); left: calc(var(--sal) + var(--pad)); right: calc(var(--sar) + var(--pad));
-  display: flex; justify-content: space-between; align-items: center; gap: 10px; pointer-events: none;
-}
-.chip {
-  display: inline-flex; align-items: center; gap: 9px; padding: 5px 15px 5px 6px; border-radius: 999px; white-space: nowrap;
-  background: var(--grain), linear-gradient(180deg, #1d252d, #12171d); border: 1px solid rgba(0,0,0,.6);
-  box-shadow: inset 0 1px 0 rgba(255,222,170,.16), 0 0 0 1px rgba(212,162,76,.2), 0 6px 16px rgba(0,0,0,.45);
-  font-weight: 700; font-size: 15px; max-width: 46vw; pointer-events: auto;
-}
-.chip.plain { padding: 6px 14px; }
-.chip .avatar-dot {
-  width: 26px; height: 26px; border-radius: 50%; flex: none;
-  background: radial-gradient(circle at 35% 28%, var(--brass-hi), var(--brass) 45%, var(--brass-lo) 100%);
-  box-shadow: inset 0 0 0 3px #1a1208, 0 0 0 1px rgba(240,207,138,.5);
-}
-#hud-nick { font-family: var(--serif); font-size: 16px; letter-spacing: .01em; overflow: hidden; text-overflow: ellipsis; }
-.shard-icon {
-  width: 15px; height: 18px; flex: none; background: linear-gradient(135deg, #d9f6ff, var(--shard) 50%, #2a8fb4);
-  clip-path: polygon(50% 0, 100% 35%, 80% 100%, 20% 100%, 0 35%); filter: drop-shadow(0 0 4px rgba(127,214,232,.6));
-}
-#hud-shards { color: var(--shard); font-variant-numeric: tabular-nums; }
-
-#hud-left {
-  position: absolute; left: calc(var(--sal) + var(--pad)); top: 50%; transform: translateY(-46%);
-  display: flex; flex-direction: column; gap: 10px;
-}
-.icon-btn {
-  position: relative; width: 78px; height: 64px; padding: 0 4px; border-radius: 12px;
-  background: var(--grain), linear-gradient(180deg, #202932, #12171d); border: 1px solid rgba(0,0,0,.65);
-  box-shadow: inset 0 1px 0 rgba(255,222,170,.18), inset 0 -2px 0 rgba(0,0,0,.35), 0 0 0 1px rgba(212,162,76,.16), 0 6px 14px rgba(0,0,0,.45);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-  transition: transform .08s ease;
-}
-.icon-btn:active { transform: translateY(1px) scale(.96); }
-.icon-btn svg { width: 26px; height: 26px; stroke: var(--brass); fill: none; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.icon-btn span { font-size: 10.5px; font-weight: 700; color: var(--text); line-height: 1; white-space: nowrap; letter-spacing: 0; }
-
-/* ---------- Action area (case file) ---------- */
-#action-area {
-  position: absolute; right: calc(var(--sar) + 16px); bottom: calc(var(--sab) + 14px);
-  width: min(318px, 42vw); min-width: 260px; display: flex; flex-direction: column; gap: 6px; padding: 10px;
-  border-radius: 14px; background: var(--grain), linear-gradient(165deg, rgba(29,37,45,.96), rgba(15,19,24,.96));
-  border: 1px solid rgba(0,0,0,.65);
-  box-shadow: inset 0 1px 0 rgba(255,222,170,.18), 0 0 0 1px rgba(212,162,76,.2), 0 14px 36px rgba(0,0,0,.55);
-}
-.selector {
-  display: flex; align-items: stretch; gap: 6px; border-radius: 10px; padding: 3px;
-  background: rgba(0,0,0,.32); box-shadow: inset 0 2px 5px rgba(0,0,0,.55), 0 1px 0 rgba(255,222,170,.06);
-}
-.sel-mid { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 2px 0; }
-.sel-label { font-size: 10px; font-weight: 700; color: var(--muted); line-height: 1.1; white-space: nowrap; }
-.sel-value { font-family: var(--serif); font-weight: 700; font-size: 15px; line-height: 1.15; text-align: center; white-space: nowrap; color: var(--brass-hi); }
-.sel-arrow {
-  width: 36px; min-height: 36px; border-radius: 8px; flex: none; display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(180deg, var(--slate-3), var(--slate-2)); border: 1px solid rgba(0,0,0,.6);
-  box-shadow: inset 0 1px 0 rgba(255,230,180,.14);
-}
-.sel-arrow svg { width: 18px; height: 18px; stroke: var(--brass); fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
-.sel-arrow:active { transform: scale(.92); }
-#btn-play {
-  width: 100%; min-height: 56px; margin-top: 3px; font-family: var(--serif); font-size: 24px; font-weight: 800; letter-spacing: .08em;
-  border-radius: 12px; animation: breathe 3.6s ease-in-out infinite;
-}
-@keyframes breathe {
-  0%, 100% { box-shadow: inset 0 1px 0 rgba(255,244,214,.6), 0 3px 0 #6b4812, 0 6px 14px rgba(212,162,76,.16); }
-  50% { box-shadow: inset 0 1px 0 rgba(255,244,214,.6), 0 3px 0 #6b4812, 0 6px 26px rgba(240,170,70,.5); }
-}
-
-#drag-hint {
-  position: absolute; left: calc(50% - 40px); bottom: calc(var(--sab) + 14px); transform: translateX(-50%);
-  font-size: 12px; font-weight: 600; color: var(--muted); background: rgba(0,0,0,.42); padding: 6px 14px; border-radius: 999px;
-  pointer-events: none; transition: opacity .6s ease; white-space: nowrap; font-family: var(--serif); font-style: italic;
-}
-
-/* ---------- Modals & panels ---------- */
-.modal {
-  position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
-  background: rgba(4, 6, 9, 0.74); backdrop-filter: blur(5px);
-  padding: calc(var(--sat) + 8px) calc(var(--sar) + 12px) calc(var(--sab) + 8px) calc(var(--sal) + 12px);
-  animation: fade .18s ease;
-}
-#modal-onboarding { z-index: 40; background: radial-gradient(ellipse at 50% 35%, rgba(44,54,66,.88), rgba(4,6,9,.97)); }
-#modal-result, #modal-pause, #modal-notebook, #modal-safe { z-index: 55; }
-@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes pop { from { transform: translateY(12px) scale(.98); opacity: 0; } to { transform: none; opacity: 1; } }
-.panel {
-  position: relative; width: min(860px, 100%); max-height: 100%; display: flex; flex-direction: column; border-radius: 14px; overflow: hidden;
-  background: var(--grain), linear-gradient(165deg, #1d252d 0%, #12171d 100%); border: 1px solid rgba(0,0,0,.7);
-  box-shadow: inset 0 1px 0 rgba(255,222,170,.16), inset 0 0 0 1px rgba(255,255,255,.03), 0 0 0 1px rgba(212,162,76,.2), 0 18px 50px rgba(0,0,0,.7);
-  animation: pop .22s ease;
-}
-.panel::before {
-  content: ""; position: absolute; top: 0; left: 8%; right: 8%; height: 1px; z-index: 2; pointer-events: none;
-  background: linear-gradient(90deg, transparent, var(--brass-hi), transparent); opacity: .7;
-}
-.panel.narrow { width: min(460px, 100%); }
-.panel.mid { width: min(640px, 100%); }
-.panel.wide { width: min(740px, 100%); }
-.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px 9px 18px; border-bottom: 1px solid var(--line); flex: none; background: rgba(0,0,0,.18); }
-.panel-head h2 { margin: 0; font-family: var(--serif); font-size: 20px; font-weight: 800; letter-spacing: .02em; color: var(--brass-hi); }
-.panel-head .head-right { display: flex; align-items: center; gap: 10px; }
-.close-btn {
-  width: 38px; height: 38px; border-radius: 9px; display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(180deg, var(--slate-3), var(--slate-2)); border: 1px solid rgba(0,0,0,.6); box-shadow: inset 0 1px 0 rgba(255,230,180,.14);
-}
-.close-btn svg { width: 16px; height: 16px; stroke: var(--text); fill: none; stroke-width: 2.4; stroke-linecap: round; }
-.panel-body { padding: 12px 18px 16px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1 1 auto; min-height: 0; }
-.field-label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); margin: 12px 0 6px; }
-.field-label:first-child { margin-top: 0; }
-.text-input {
-  width: 100%; height: 46px; border-radius: 9px; border: 1px solid rgba(0,0,0,.7); background: rgba(0,0,0,.4);
-  box-shadow: inset 0 2px 5px rgba(0,0,0,.5); color: var(--text); font-size: 17px; font-weight: 600; padding: 0 14px; outline: none;
-  -webkit-user-select: text; user-select: text; font-family: var(--serif);
-}
-.text-input:focus { border-color: var(--brass); }
-.error-text { color: #ff9b86; font-size: 13px; font-weight: 600; min-height: 18px; margin-top: 6px; }
-.row { display: flex; gap: 10px; }
-.row > * { flex: 1; }
-.subtitle { color: var(--muted); font-size: 14px; margin: 6px 0 10px; line-height: 1.45; }
-.logo { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-size: 28px; font-weight: 800; line-height: 1.1; margin: 0; color: var(--brass-hi); text-shadow: 0 0 22px rgba(226,98,58,.35); }
-.emblem { width: 40px; height: 40px; flex: none; stroke: var(--brass); fill: none; stroke-width: 1.6; stroke-linejoin: round; stroke-linecap: round; }
-
-.gender-btn, .seg-btn {
-  min-height: 64px; border-radius: 10px; background: linear-gradient(180deg, var(--slate-3), var(--slate-2)); border: 1px solid rgba(0,0,0,.65);
-  box-shadow: inset 0 1px 0 rgba(255,230,180,.12); font-weight: 700; font-size: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px;
-}
-.gender-icon svg, .seg-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.gender-btn.active, .seg-btn.active, .tab-btn.active {
-  color: var(--brass-hi); border-color: var(--brass); background: linear-gradient(180deg, rgba(212,162,76,.26), rgba(212,162,76,.1));
-  box-shadow: inset 0 0 0 1px rgba(240,207,138,.3), 0 0 14px rgba(212,162,76,.18);
-}
-.seg-btn { min-height: 44px; flex-direction: row; gap: 8px; font-size: 14px; white-space: nowrap; }
-
-.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 26px; align-items: start; }
-.onb-grid { display: grid; grid-template-columns: 1fr 1.15fr; gap: 26px; align-items: center; }
-.onb-brand { padding: 6px 0; }
-.onb-brand .subtitle { max-width: 28ch; }
-
-/* ---------- Tabs ---------- */
-.tabs { display: flex; gap: 6px; padding: 10px 14px 0; overflow-x: auto; flex: none; scrollbar-width: none; }
-.tabs::-webkit-scrollbar { display: none; }
-.tab-btn {
-  flex: none; padding: 8px 16px; min-height: 38px; border-radius: 9px; white-space: nowrap; font-weight: 700; font-size: 13px;
-  background: linear-gradient(180deg, var(--slate-3), var(--slate-2)); border: 1px solid rgba(0,0,0,.65); box-shadow: inset 0 1px 0 rgba(255,230,180,.1);
-}
-
-/* ---------- Item grids ---------- */
-.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-.item-card {
-  position: relative; display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 10px;
-  background: linear-gradient(180deg, #232d37, #181f26); border: 1px solid rgba(0,0,0,.65);
-  box-shadow: inset 0 1px 0 rgba(255,230,180,.1);
-}
-.item-card.rarity-rare { box-shadow: inset 0 1px 0 rgba(255,230,180,.1), 0 0 0 1px rgba(127,214,232,.5); }
-.item-card.rarity-epic { box-shadow: inset 0 1px 0 rgba(255,230,180,.1), 0 0 0 1px rgba(190,130,255,.6); }
-.item-card.rarity-legendary { box-shadow: inset 0 1px 0 rgba(255,230,180,.1), 0 0 0 1px rgba(240,190,90,.85), 0 0 16px rgba(240,190,90,.2); }
-.item-card.equipped { background: linear-gradient(180deg, rgba(111,194,164,.2), rgba(111,194,164,.07)); box-shadow: inset 0 0 0 1px rgba(111,194,164,.7); }
-.item-icon { height: 56px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 30px; background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.07), rgba(0,0,0,.35)); box-shadow: inset 0 2px 6px rgba(0,0,0,.5); }
-.item-name { font-weight: 700; font-size: 13px; line-height: 1.2; font-family: var(--serif); }
-.item-desc { font-size: 11px; color: var(--muted); line-height: 1.35; flex: 1; }
-.item-tag { position: absolute; top: 6px; right: 6px; font-size: 9.5px; font-weight: 800; padding: 2px 6px; border-radius: 5px; background: #bfe9ff; color: #06202e; }
-.item-qty { font-size: 12px; font-weight: 700; color: var(--brass-hi); }
-.item-price { display: flex; align-items: center; justify-content: center; gap: 6px; }
-.empty-state { text-align: center; color: var(--muted); padding: 26px 10px; font-weight: 600; font-size: 14px; grid-column: 1 / -1; font-family: var(--serif); font-style: italic; }
-.section-title { font-size: 12px; font-weight: 700; color: var(--muted); margin: 4px 0 4px; grid-column: 1 / -1; }
-
-/* ---------- Settings ---------- */
-.toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; font-weight: 700; }
-.switch { position: relative; width: 56px; height: 30px; border-radius: 999px; background: #10151a; box-shadow: inset 0 2px 5px rgba(0,0,0,.6); border: 1px solid rgba(0,0,0,.7); flex: none; transition: background .2s; }
-.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(180deg, #d8d2c2, #8b8575); transition: transform .2s; }
-.switch.on { background: #254a3d; }
-.switch.on::after { transform: translateX(26px); background: linear-gradient(180deg, #b9f0d8, var(--good)); }
-.divider { height: 1px; background: var(--line); margin: 10px 0; }
-
-/* ---------- Toast ---------- */
-#toast {
-  position: absolute; left: 50%; top: calc(var(--sat) + 62px); transform: translate(-50%, -20px); z-index: 90;
-  background: linear-gradient(180deg, #1d252d, #12171d); border: 1px solid rgba(212,162,76,.4); padding: 9px 18px; border-radius: 999px;
-  font-weight: 700; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: 80vw; text-align: center;
-  box-shadow: 0 8px 24px rgba(0,0,0,.5);
-}
-#toast.show { opacity: 1; transform: translate(-50%, 0); }
-#toast.error { border-color: var(--accent-2); color: #ffb3aa; }
-#toast.success { border-color: var(--good); color: var(--good); }
-
-/* ---------- Loading / transition / rotate ---------- */
-#loading { position: absolute; inset: 0; z-index: 120; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; transition: opacity .4s ease; }
-#loading.done { opacity: 0; pointer-events: none; }
-.spinner { width: 40px; height: 40px; border-radius: 50%; border: 3px solid rgba(255,255,255,.1); border-top-color: var(--brass); animation: spin .9s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-#loading-text { color: var(--muted); font-weight: 600; font-size: 14px; font-family: var(--serif); font-style: italic; }
-
-#transition {
-  position: absolute; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;
-  background: radial-gradient(ellipse at 50% 45%, #141a21, #030405 75%); opacity: 0; pointer-events: none; transition: opacity .7s ease;
-}
-#transition.show { opacity: 1; pointer-events: auto; }
-#tr-title { font-family: var(--serif); font-size: 30px; font-weight: 800; color: var(--brass-hi); text-shadow: 0 0 26px rgba(226,98,58,.4); }
-#tr-sub { color: var(--muted); font-size: 14px; font-family: var(--serif); font-style: italic; }
-#tr-bar { width: min(240px, 50vw); height: 3px; border-radius: 2px; background: rgba(255,255,255,.08); overflow: hidden; margin-top: 6px; }
-#tr-bar i { display: block; height: 100%; width: 40%; background: var(--brass); animation: slide 1.1s ease-in-out infinite; }
-@keyframes slide { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
-
-#rotate-overlay {
-  position: fixed; inset: 0; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 18px; text-align: center; padding: 24px;
-  background: radial-gradient(ellipse at 50% 40%, #1a222b, #05070a 80%);
-}
-#rotate-overlay svg { width: 96px; height: 96px; stroke: var(--brass); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; animation: tilt 2.8s ease-in-out infinite; }
-@keyframes tilt { 0%, 15% { transform: rotate(0deg); } 55%, 100% { transform: rotate(-90deg); } }
-#rotate-overlay h2 { margin: 0; font-family: var(--serif); font-size: 22px; font-weight: 800; color: var(--brass-hi); }
-#rotate-overlay p { margin: 0; color: var(--muted); font-size: 14px; max-width: 30ch; line-height: 1.45; }
-@media (orientation: portrait) and (max-width: 1100px) { #rotate-overlay { display: flex; } }
-
-/* =====================================================================
-   IN-GAME UI
-   ===================================================================== */
-#game-ui { position: absolute; inset: 0; z-index: 6; pointer-events: none; touch-action: none; }
-#game-ui > * { pointer-events: auto; }
-#zone-move, #zone-look { position: absolute; top: 0; bottom: 0; touch-action: none; z-index: 1; }
-#zone-move { left: 0; width: 45%; }
-#zone-look { right: 0; width: 55%; }
-
-#joy-base {
-  position: absolute; left: calc(var(--sal) + 46px); bottom: calc(var(--sab) + 36px); width: 124px; height: 124px; border-radius: 50%; z-index: 2; pointer-events: none;
-  background: radial-gradient(circle, rgba(20,26,33,.55) 55%, rgba(212,162,76,.14) 100%); border: 2px solid rgba(240,207,138,.35);
-  box-shadow: inset 0 0 18px rgba(0,0,0,.6); opacity: .65; transition: opacity .15s, border-color .15s;
-}
-#joy-base.active { opacity: 1; }
-#joy-base.sprint { border-color: var(--accent-2); box-shadow: inset 0 0 18px rgba(0,0,0,.6), 0 0 16px rgba(226,98,58,.5); }
-#joy-knob {
-  position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 28%, var(--brass-hi), var(--brass) 50%, var(--brass-lo)); box-shadow: 0 3px 8px rgba(0,0,0,.6), inset 0 0 0 3px rgba(26,18,8,.6);
-}
-
-#g-top {
-  position: absolute; top: calc(var(--sat) + 8px); left: calc(var(--sal) + 12px); right: calc(var(--sar) + 12px);
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; pointer-events: none; z-index: 3;
-}
-#g-top > * { pointer-events: auto; }
-.g-left, .g-right { display: flex; align-items: center; gap: 8px; }
-.g-right { align-items: flex-start; }
-.g-pill {
-  display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap;
-  background: rgba(14,18,23,.78); border: 1px solid rgba(212,162,76,.3); box-shadow: 0 4px 12px rgba(0,0,0,.4);
-}
-.g-pill svg { width: 15px; height: 15px; stroke: var(--brass); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-#g-pause { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: rgba(14,18,23,.78); border: 1px solid rgba(212,162,76,.3); }
-#g-pause svg { width: 18px; height: 18px; stroke: var(--text); fill: none; stroke-width: 2.4; stroke-linecap: round; }
-#g-objective {
-  position: absolute; left: 50%; transform: translateX(-50%); top: 0; max-width: 34vw; text-align: center; padding: 6px 14px; border-radius: 10px;
-  font-family: var(--serif); font-style: italic; font-size: 13px; line-height: 1.3; color: var(--brass-hi);
-  background: rgba(14,18,23,.7); border: 1px solid rgba(212,162,76,.22); pointer-events: none;
-}
-#g-batt { gap: 8px; }
-#g-battery { width: 46px; height: 12px; border-radius: 3px; border: 1.5px solid var(--text); padding: 1px; position: relative; flex: none; }
-#g-battery::after { content: ""; position: absolute; right: -5px; top: 2px; width: 3px; height: 5px; background: var(--text); border-radius: 0 2px 2px 0; }
-#g-battery-fill { height: 100%; width: 100%; border-radius: 1px; background: var(--good); transition: width .3s linear, background .3s; }
-#g-battery-fill.low { background: var(--accent-2); }
-#g-keys, #g-boosters { display: flex; gap: 6px; }
-.g-chip-ico { height: 34px; min-width: 34px; padding: 0 8px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; font-size: 15px; font-weight: 700; background: rgba(14,18,23,.78); border: 1px solid rgba(212,162,76,.3); }
-.g-chip-ico small { font-size: 11px; color: var(--brass-hi); }
-
-#g-cross { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; margin: -3px 0 0 -3px; border-radius: 50%; background: rgba(255,255,255,.55); pointer-events: none; z-index: 2; box-shadow: 0 0 0 1px rgba(0,0,0,.4); }
-#g-cross.hot { background: var(--brass-hi); box-shadow: 0 0 0 3px rgba(240,207,138,.3); }
-
-#g-prompt {
-  position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--sab) + 22px); z-index: 3; pointer-events: none;
-  padding: 8px 18px; border-radius: 999px; font-size: 14px; font-weight: 700; white-space: nowrap;
-  background: rgba(14,18,23,.85); border: 1px solid var(--brass); color: var(--brass-hi); box-shadow: 0 0 18px rgba(212,162,76,.25);
-}
-
-#g-controls { position: absolute; right: calc(var(--sar) + 12px); bottom: calc(var(--sab) + 12px); width: 220px; height: 210px; pointer-events: none; z-index: 3; }
-.gbtn {
-  position: absolute; width: 58px; height: 58px; border-radius: 50%; pointer-events: auto; display: flex; align-items: center; justify-content: center; touch-action: none;
-  background: radial-gradient(circle at 40% 30%, rgba(46,58,70,.85), rgba(12,16,21,.88)); border: 2px solid rgba(212,162,76,.6);
-  box-shadow: 0 4px 12px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,230,180,.2); transition: transform .06s ease, background .15s, box-shadow .15s;
-}
-.gbtn svg { width: 26px; height: 26px; stroke: #f3e5c2; fill: none; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
-.gbtn:active, .gbtn.pressed { transform: scale(.92); background: radial-gradient(circle at 40% 30%, rgba(212,162,76,.55), rgba(60,42,14,.9)); }
-.gbtn.on { background: radial-gradient(circle at 40% 30%, #f6d58a, #c98f2e); border-color: #fff0c0; box-shadow: 0 0 20px rgba(255,200,100,.55), 0 4px 12px rgba(0,0,0,.55); }
-.gbtn.on svg { stroke: #2a1a05; }
-.gbtn.ready { border-color: var(--brass-hi); box-shadow: 0 0 22px rgba(240,207,138,.55), 0 4px 12px rgba(0,0,0,.55); }
-#b-act { width: 74px; height: 74px; right: 0; bottom: 0; }
-#b-act svg { width: 32px; height: 32px; }
-#b-jump { right: 88px; bottom: 6px; }
-#b-light { right: 6px; bottom: 90px; }
-.gsmall { width: 44px; height: 44px; }
-.gsmall svg { width: 21px; height: 21px; }
-#g-side { position: absolute; right: calc(var(--sar) + 12px); top: calc(var(--sat) + 56px); display: flex; flex-direction: column; gap: 8px; z-index: 3; pointer-events: none; }
-#g-side .gbtn { position: relative; pointer-events: auto; }
-#cam-mode { position: absolute; right: -2px; bottom: -2px; font-size: 9.5px; font-weight: 800; padding: 1px 4px; border-radius: 5px; background: var(--brass); color: #1e1304; line-height: 1.2; }
-#g-notes-dot { position: absolute; top: -2px; right: -2px; width: 11px; height: 11px; border-radius: 50%; background: var(--accent-2); box-shadow: 0 0 8px var(--accent-2); }
-
-#g-sub {
-  position: absolute; left: 50%; transform: translateX(-50%); top: 66%; max-width: 70vw; text-align: center; z-index: 3; pointer-events: none;
-  font-family: var(--serif); font-style: italic; font-size: 17px; line-height: 1.4; color: #e9dfc9; text-shadow: 0 2px 8px #000, 0 0 3px #000; opacity: 0; transition: opacity .4s ease;
-}
-#g-sub.show { opacity: 1; }
-#g-sub.scary { color: #ff8f7c; }
-
-#g-dialog {
-  position: absolute; left: 50%; transform: translateX(-50%); bottom: calc(var(--sab) + 12px); width: min(580px, 58vw); z-index: 4; padding: 12px 16px 12px;
-  border-radius: 14px; background: var(--grain), linear-gradient(165deg, rgba(29,37,45,.97), rgba(13,17,22,.97)); border: 1px solid rgba(0,0,0,.7);
-  box-shadow: inset 0 1px 0 rgba(255,222,170,.16), 0 0 0 1px rgba(111,194,164,.35), 0 12px 34px rgba(0,0,0,.6);
-}
-#dlg-name { font-family: var(--serif); font-weight: 800; font-size: 14px; color: #a9e6cf; margin-bottom: 4px; }
-#dlg-text { font-size: 14px; line-height: 1.5; color: var(--text); min-height: 42px; }
-#dlg-choices { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
-#dlg-choices .btn { text-align: left; white-space: normal; min-height: 40px; font-size: 13.5px; padding: 8px 14px; }
-#dlg-next { margin-top: 6px; font-size: 11px; color: var(--muted); text-align: right; font-style: italic; }
-
-#g-vignette { position: absolute; inset: 0; pointer-events: none; z-index: 2; background: radial-gradient(ellipse at 50% 50%, transparent 52%, rgba(0,0,0,.62) 100%); }
-#g-flash { position: absolute; inset: 0; pointer-events: none; z-index: 8; background: #fff; opacity: 0; }
-#g-fade { position: absolute; inset: 0; pointer-events: none; z-index: 9; background: #000; opacity: 0; transition: opacity .5s ease; }
-
-/* Notebook */
-.paper { background: #d8c9a4; color: #2a2013; border-radius: 6px; padding: 10px 12px; margin-bottom: 8px; font-family: var(--serif); font-size: 14px; line-height: 1.45; box-shadow: 0 2px 0 rgba(0,0,0,.35), inset 0 0 22px rgba(120,86,30,.25); }
-.paper b { display: block; font-size: 12px; color: #6b4a14; margin-bottom: 2px; }
-.paper.locked { background: #2a323b; color: var(--muted); box-shadow: inset 0 2px 5px rgba(0,0,0,.5); font-style: italic; }
-.paper.key { background: #c7d9cf; }
-.nb-col h3 { margin: 0 0 8px; font-family: var(--serif); font-size: 15px; color: var(--brass-hi); }
-
-/* Safe keypad */
-#safe-display { display: flex; justify-content: center; gap: 10px; margin: 4px 0 12px; }
-#safe-display i { width: 44px; height: 54px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-style: normal; font-size: 28px; font-weight: 700; font-family: ui-monospace, Menlo, Consolas, monospace; color: #a9e6cf; background: #0a0f12; box-shadow: inset 0 2px 6px rgba(0,0,0,.8); border: 1px solid rgba(111,194,164,.35); }
-#safe-pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 250px; margin: 0 auto; }
-#safe-pad .btn { min-height: 44px; font-size: 20px; padding: 6px; font-family: ui-monospace, Menlo, Consolas, monospace; }
-#safe-msg { text-align: center; min-height: 20px; margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--muted); }
-#safe-msg.bad { color: #ff9b86; }
-#safe-msg.good { color: var(--good); }
-#safe-pad.shake { animation: shake .35s; }
-@keyframes shake { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
-
-/* Result */
-.result-body { text-align: center; padding: 22px 24px 20px; }
-.result-body h3 { margin: 0 0 6px; font-family: var(--serif); font-size: 26px; font-weight: 800; color: var(--brass-hi); }
-.result-body p { margin: 4px 0; color: var(--muted); font-size: 14px; line-height: 1.45; }
-#res-stats { display: inline-block; text-align: left; margin: 10px 0 6px; padding: 8px 16px; border-radius: 10px; background: rgba(0,0,0,.3); box-shadow: inset 0 2px 6px rgba(0,0,0,.5); font-size: 13px; font-weight: 600; line-height: 1.75; }
-#res-stats b { color: var(--brass-hi); }
-#res-reward { display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--serif); font-size: 30px; font-weight: 800; color: var(--shard); margin: 6px 0 12px; }
-#res-reward .shard-icon { width: 20px; height: 24px; }
-
-/* ---------- Compact landscape phones ---------- */
-@media (max-height: 440px) {
-  :root { --pad: 10px; }
-  .icon-btn { width: 74px; height: 58px; }
-  .icon-btn svg { width: 23px; height: 23px; }
-  #hud-left { gap: 8px; }
-  #action-area { padding: 8px; gap: 5px; }
-  .sel-arrow { width: 32px; min-height: 32px; }
-  .sel-value { font-size: 14px; }
-  #btn-play { min-height: 48px; font-size: 21px; }
-  .panel-head { padding: 6px 10px 6px 14px; }
-  .panel-head h2 { font-size: 17px; }
-  .panel-body { padding: 10px 14px 12px; }
-  .gender-btn { min-height: 54px; }
-  .logo { font-size: 22px; }
-  .emblem { width: 32px; height: 32px; }
-  .tab-btn { min-height: 34px; padding: 6px 13px; }
-  .gbtn { width: 52px; height: 52px; }
-  #b-act { width: 66px; height: 66px; }
-  #b-jump { right: 78px; }
-  #b-light { bottom: 80px; }
-  .gsmall { width: 40px; height: 40px; }
-  #g-controls { height: 190px; width: 200px; }
-  #joy-base { width: 110px; height: 110px; bottom: calc(var(--sab) + 24px); }
-  #joy-knob { width: 48px; height: 48px; margin: -24px 0 0 -24px; }
-  #g-sub { font-size: 15px; }
-  #g-dialog { padding: 9px 13px; }
-  #dlg-text { font-size: 13px; min-height: 34px; }
-  #safe-display i { width: 40px; height: 46px; font-size: 24px; }
-}
-@media (max-height: 360px) {
-  .icon-btn { height: 54px; }
-  #action-area { gap: 4px; }
-  .sel-arrow { width: 30px; min-height: 28px; }
-  .sel-label { font-size: 9.5px; }
-}
-@media (max-width: 700px) and (orientation: landscape) {
-  .onb-grid, .cols { grid-template-columns: 1fr; gap: 6px; }
-  #g-objective { max-width: 30vw; font-size: 12px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#070b14">
+    <title>ClueDusk — Дело №1</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cloudflare.com"></script>
 </head>
 <body>
-<div id="app">
 
-  <!-- 3D stage (lobby + level share one renderer) -->
-  <canvas id="stage"></canvas>
-
-  <!-- Loading -->
-  <div id="loading">
-    <div class="spinner"></div>
-    <div id="loading-text">Loading…</div>
-  </div>
-
-  <!-- ================= LOBBY HUD ================= -->
-  <div id="hud" class="hidden">
-    <div id="hud-top">
-      <div class="chip" id="hud-profile"><span class="avatar-dot"></span><span id="hud-nick">Detective</span></div>
-      <div class="chip plain" id="hud-currency"><span class="shard-icon"></span><span id="hud-shards">500</span></div>
+    <!-- Предупреждение о горизонтальной ориентации -->
+    <div id="rotate-screen">
+        <div class="rotate-icon">📱↻</div>
+        <h2>Поверните устройство горизонтально</h2>
+        <p>ClueDusk работает только в альбомном режиме</p>
     </div>
 
-    <div id="hud-left">
-      <button class="icon-btn" id="btn-shop" aria-label="Shop">
-        <svg viewBox="0 0 24 24"><path d="M3.5 12.5L12.5 3.5H20v7.5l-9 9z"/><circle cx="15.8" cy="8.2" r="1.4"/><path d="M8.2 14.8l1.6 1.6"/></svg>
-        <span data-i18n="hud.shop">Shop</span>
-      </button>
-      <button class="icon-btn" id="btn-inventory" aria-label="Inventory">
-        <svg viewBox="0 0 24 24"><path d="M4 9a3 3 0 0 1 3-3h10a3 3 0 0 1 3 3v10H4z"/><path d="M4 12.5h16"/><path d="M10.5 12.5v3h3v-3"/><path d="M9 6V4.5h6V6"/></svg>
-        <span data-i18n="hud.inventory">Inventory</span>
-      </button>
-      <button class="icon-btn" id="btn-settings" aria-label="Settings">
-        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.4" stroke-width="3.4" stroke-dasharray="2.9 2.9"/><circle cx="12" cy="12" r="4.8"/><circle cx="12" cy="12" r="1.6"/></svg>
-        <span data-i18n="hud.settings">Settings</span>
-      </button>
+    <!-- Атмосферный титр в начале -->
+    <div id="intro-date" class="hidden">
+        <p class="date-main">НОЯБРЬ. 01:40 НОЧИ</p>
+        <p class="date-sub">Глухой посёлок на окраине области (12 домов)...</p>
     </div>
 
-    <div id="drag-hint" data-i18n="hud.dragHint">Drag to rotate</div>
-
-    <div id="action-area">
-      <div class="selector" data-selector="difficulty">
-        <button class="sel-arrow sel-prev" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-        <div class="sel-mid"><span class="sel-label" data-i18n="sel.difficulty">Difficulty</span><span class="sel-value" id="sel-difficulty-value">Easy</span></div>
-        <button class="sel-arrow sel-next" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
-      </div>
-      <div class="selector" data-selector="mode">
-        <button class="sel-arrow sel-prev" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-        <div class="sel-mid"><span class="sel-label" data-i18n="sel.mode">Mode</span><span class="sel-value" id="sel-mode-value">Solo</span></div>
-        <button class="sel-arrow sel-next" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
-      </div>
-      <div class="selector" data-selector="map">
-        <button class="sel-arrow sel-prev" aria-label="Previous"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-        <div class="sel-mid"><span class="sel-label" data-i18n="sel.map">Map</span><span class="sel-value" id="sel-map-value">Old Boarding School</span></div>
-        <button class="sel-arrow sel-next" aria-label="Next"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
-      </div>
-      <button class="btn primary" id="btn-play" data-i18n="hud.play">PLAY</button>
-    </div>
-  </div>
-
-  <!-- ================= IN-GAME UI ================= -->
-  <div id="game-ui" class="hidden">
-    <div id="zone-move"></div>
-    <div id="zone-look"></div>
-    <div id="g-vignette"></div>
-    <div id="g-cross"></div>
-
-    <div id="joy-base"><div id="joy-knob"></div></div>
-
-    <div id="g-top">
-      <div class="g-left">
-        <button id="g-pause" aria-label="Pause"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
-        <div class="g-pill" id="g-clue-pill"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l6 6"/></svg><span id="g-clues">0/5</span></div>
-        <div class="g-pill" id="g-room-pill"><span id="g-room-name">Main Hall</span></div>
-      </div>
-      <div id="g-objective"></div>
-      <div class="g-right">
-        <div id="g-boosters"></div>
-        <div id="g-keys"></div>
-        <div class="g-pill" id="g-batt"><div id="g-battery"><div id="g-battery-fill"></div></div><span id="g-battery-text">100%</span></div>
-      </div>
-    </div>
-
-    <div id="g-side">
-      <button class="gbtn gsmall" id="b-note" aria-label="Notebook">
-        <svg viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v16H8a2 2 0 0 1-2-2z"/><path d="M6 19a2 2 0 0 1 2-2h11"/><path d="M10 8h6M10 11.5h4"/></svg>
-        <span id="g-notes-dot" class="hidden"></span>
-      </button>
-      <button class="gbtn gsmall" id="b-cam" aria-label="Camera">
-        <svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-        <span id="cam-mode">1P</span>
-      </button>
-    </div>
-
-    <div id="g-controls">
-      <button class="gbtn" id="b-light" aria-label="Flashlight">
-        <svg viewBox="0 0 24 24"><path d="M9 3h6l1 5H8z"/><path d="M9 8v11a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1V8"/><path d="M12 12v3"/></svg>
-      </button>
-      <button class="gbtn" id="b-jump" aria-label="Jump">
-        <svg viewBox="0 0 24 24"><path d="M12 19V6"/><path d="M6 11l6-6 6 6"/><path d="M8 21h8"/></svg>
-      </button>
-      <button class="gbtn" id="b-act" aria-label="Interact">
-        <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l6 6"/><path d="M8 10.5h5M10.5 8v5"/></svg>
-      </button>
-    </div>
-
-    <div id="g-prompt" class="hidden"><span id="g-prompt-text"></span></div>
-    <div id="g-sub"></div>
-
-    <div id="g-dialog" class="hidden">
-      <div id="dlg-name"></div>
-      <div id="dlg-text"></div>
-      <div id="dlg-choices"></div>
-      <div id="dlg-next"></div>
-    </div>
-
-    <div id="g-flash"></div>
-    <div id="g-fade"></div>
-  </div>
-
-  <!-- ================= MODALS ================= -->
-
-  <!-- Onboarding -->
-  <div class="modal hidden" id="modal-onboarding">
-    <div class="panel wide">
-      <div class="panel-body">
-        <div class="onb-grid">
-          <div class="onb-brand">
-            <h1 class="logo">
-              <svg class="emblem" viewBox="0 0 48 48"><path d="M24 4l18 20-18 20L6 24z"/><path d="M12 24s5-7 12-7 12 7 12 7-5 7-12 7-12-7-12-7z"/><circle cx="24" cy="24" r="3.6"/></svg>
-              <span data-i18n="onboarding.title">Mystery Detective</span>
-            </h1>
-            <p class="subtitle" data-i18n="onboarding.subtitle">Create your detective to begin the investigation.</p>
-          </div>
-          <div>
-            <label class="field-label" for="onb-nick" data-i18n="onboarding.nickname">Nickname</label>
-            <input class="text-input" id="onb-nick" type="text" maxlength="14" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Detective">
-            <div class="field-label" data-i18n="onboarding.gender">Gender</div>
-            <div class="row" id="onb-gender">
-              <button class="gender-btn active" data-gender="female"><span class="gender-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"/><path d="M12 14v8M8.5 18h7"/></svg></span><span data-i18n="gender.female">Female</span></button>
-              <button class="gender-btn" data-gender="male"><span class="gender-icon"><svg viewBox="0 0 24 24"><circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/></svg></span><span data-i18n="gender.male">Male</span></button>
+    <!-- Диалог-предыстория -->
+    <div id="dialogue-screen" class="hidden">
+        <div class="dialogue-box">
+            <div class="character-card">
+                <div class="avatar-silhouette">🕵️‍♂️</div>
+                <span id="speaker-name">Сергей (Заказчик)</span>
             </div>
-            <div class="error-text" id="onb-error"></div>
-            <button class="btn primary" id="onb-start" style="width:100%;margin-top:4px;min-height:50px;font-size:17px" data-i18n="onboarding.start">Start Investigation</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Shop -->
-  <div class="modal hidden" id="modal-shop">
-    <div class="panel" style="height:min(560px,100%)">
-      <div class="panel-head">
-        <h2 data-i18n="shop.title">Shop</h2>
-        <div class="head-right">
-          <div class="chip plain" style="padding:4px 12px"><span class="shard-icon"></span><span id="shop-balance" style="color:var(--shard)">500</span></div>
-          <button class="close-btn" data-close="modal-shop" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
-        </div>
-      </div>
-      <div class="tabs" id="shop-tabs">
-        <button class="tab-btn active" data-tab="outfits" data-i18n="shop.tab.outfits">Outfits</button>
-        <button class="tab-btn" data-tab="hair" data-i18n="shop.tab.hair">Hair &amp; Hats</button>
-        <button class="tab-btn" data-tab="accessories" data-i18n="shop.tab.accessories">Accessories</button>
-        <button class="tab-btn" data-tab="boosters" data-i18n="shop.tab.boosters">Boosters</button>
-      </div>
-      <div class="panel-body"><div class="item-grid" id="shop-grid"></div></div>
-    </div>
-  </div>
-
-  <!-- Inventory / Wardrobe -->
-  <div class="modal hidden" id="modal-inventory">
-    <div class="panel" style="height:min(560px,100%)">
-      <div class="panel-head">
-        <h2 data-i18n="inv.title">Inventory</h2>
-        <div class="head-right">
-          <button class="close-btn" data-close="modal-inventory" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></button>
-        </div>
-      </div>
-      <div class="tabs" id="inv-tabs">
-        <button class="tab-btn active" data-tab="outfits" data-i18n="shop.tab.outfits">Outfits</button>
-        <button class="tab-btn" data-tab="hair" data-i18n="shop.tab.hair">Hair &amp; Hats</button>
-        <button class="tab-btn" data-tab="accessories" data-i18n="shop.tab.accessories">Accessories</button>
-        <button class="tab-btn" data-tab="boosters" data-i18n="shop.tab.boosters">Boosters</button>
-      </div>
-      <div class="panel-body"><div class="item-grid" id="inv-grid"></div></div>
-    </div>
-  </div>
-
-  <!-- Settings -->
-  <div class="modal hidden" id="modal-settings">
-    <div class="panel mid" style="max-height:100%">
-      <div class="panel-head">
-        <h2 data-i18n="settings.title">Settings</h2>
-        <div class="head-right"><button class="close-btn" data-close="modal-settings" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div>
-      </div>
-      <div class="panel-body">
-        <div class="cols">
-          <div>
-            <div class="field-label" data-i18n="settings.language">Language</div>
-            <div class="row" id="set-lang">
-              <button class="seg-btn" data-lang="en">English</button>
-              <button class="seg-btn" data-lang="ru">Русский</button>
+            <div class="dialogue-content">
+                <p id="dialogue-text"></p>
+                <div class="dialogue-controls">
+                    <button id="btn-skip" class="btn-secondary">Пропустить (Skip)</button>
+                    <button id="btn-next" class="btn-primary">Дальше ➔</button>
+                </div>
+                <div id="gender-choice" class="hidden">
+                    <button class="btn-primary" onclick="startGame('male')">Хорошо, я понял</button>
+                    <button class="btn-primary" onclick="startGame('female')">Хорошо, я поняла</button>
+                </div>
             </div>
-            <div class="divider"></div>
-            <div class="toggle-row">
-              <span data-i18n="settings.sound">Sound</span>
-              <button class="switch on" id="toggle-sound" role="switch" aria-checked="true" aria-label="Sound"></button>
+        </div>
+    </div>
+
+    <!-- Игровой интерфейс (HUD) -->
+    <div id="game-hud" class="hidden">
+        <div class="top-bar">
+            <div class="hud-badge">🔍 Улики: <span id="clue-count">0</span>/7</div>
+            <div class="hud-badge">💰 <span id="coins-count">100</span> ClueCoins</div>
+            <div class="top-buttons">
+                <button class="hud-btn" onclick="openModal('notes-modal')">📓 Блокнот</button>
+                <button class="hud-btn" onclick="useHint()">💡 Подсказка (<span id="hint-free">5</span>)</button>
+                <button id="btn-verdict" class="hud-btn verdict-ready hidden" onclick="openVerdict()">⚖️ Вердикт</button>
             </div>
-          </div>
-          <div>
-            <label class="field-label" for="set-nick" data-i18n="settings.nickname">Nickname</label>
-            <div class="row">
-              <input class="text-input" id="set-nick" type="text" maxlength="14" autocomplete="off" spellcheck="false" style="flex:1">
-              <button class="btn primary small" id="btn-save-nick" style="flex:none;min-width:92px" data-i18n="settings.save">Save</button>
+        </div>
+
+        <!-- Зона взаимодействия по центру -->
+        <div id="interact-prompt" class="hidden">
+            <button id="btn-interact" onclick="interactWithTarget()">✋ Осмотреть</button>
+        </div>
+
+        <!-- Управление для планшета/телефона -->
+        <div id="joystick-zone">
+            <div id="joystick-base">
+                <div id="joystick-stick"></div>
             </div>
-            <div class="error-text" id="set-error"></div>
-            <div class="field-label" data-i18n="settings.gender">Gender</div>
-            <div class="row" id="set-gender">
-              <button class="seg-btn" data-gender="female"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="5"/><path d="M12 14v8M8.5 18h7"/></svg><span data-i18n="gender.female">Female</span></button>
-              <button class="seg-btn" data-gender="male"><svg viewBox="0 0 24 24"><circle cx="10" cy="14" r="5"/><path d="M14 10l6-6M15 4h5v5"/></svg><span data-i18n="gender.male">Male</span></button>
+        </div>
+
+        <div id="look-zone"></div>
+
+        <div class="action-buttons">
+            <button id="btn-flashlight" class="circle-btn active" onclick="toggleFlashlight()">🔦</button>
+            <button id="btn-sprint" class="circle-btn" ontouchstart="setSprint(true)" ontouchend="setSprint(false)" onmousedown="setSprint(true)" onmouseup="setSprint(false)">🏃</button>
+            <button id="btn-cam" class="circle-btn" onclick="toggleCameraMode()">👁️ 1-е</button>
+        </div>
+    </div>
+
+    <!-- Всплывающее окно улики / подсказки -->
+    <div id="clue-modal" class="modal hidden">
+        <div class="modal-box">
+            <h3 id="modal-title">Найдена улика!</h3>
+            <p id="modal-desc"></p>
+            <button class="btn-primary" onclick="closeModal('clue-modal')">Записать в блокнот</button>
+        </div>
+    </div>
+
+    <!-- Блокнот детектива -->
+    <div id="notes-modal" class="modal hidden">
+        <div class="modal-box">
+            <h3>📓 Блокнот расследования</h3>
+            <div id="notes-list"></div>
+            <button class="btn-secondary" onclick="closeModal('notes-modal')">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Окно выбора концовки (Вердикт) -->
+    <div id="verdict-modal" class="modal hidden">
+        <div class="modal-box">
+            <h3>⚖️ Вынести вердикт по делу №1</h3>
+            <p>Вы собрали достаточно улик. Кто и зачем забрал ровно 397 620 ₽?</p>
+            <div class="verdict-options">
+                <button class="verdict-btn" onclick="finishGame(1)">1. Случайные грабители с трассы, забрали всё, что успели унести.</button>
+                <button class="verdict-btn" onclick="finishGame(2)">2. Близкий сосед с соседнего участка: он знал код сейфа и взял точную сумму для закрытия своего долга (397 620 ₽).</button>
+                <button class="verdict-btn" onclick="finishGame(3)">3. Инсценировка самого Сергея ради страховки.</button>
             </div>
-          </div>
+            <button class="btn-secondary" onclick="closeModal('verdict-modal')">Ещё подумать</button>
         </div>
-      </div>
     </div>
-  </div>
 
-  <!-- Pause -->
-  <div class="modal hidden" id="modal-pause">
-    <div class="panel narrow">
-      <div class="panel-head"><h2 data-i18n="pause.title">Paused</h2></div>
-      <div class="panel-body">
-        <div class="toggle-row">
-          <span data-i18n="settings.sound">Sound</span>
-          <button class="switch on" id="p-sound" role="switch" aria-checked="true" aria-label="Sound"></button>
+    <!-- Экран концовки -->
+    <div id="ending-screen" class="modal hidden">
+        <div class="modal-box">
+            <h2 id="ending-title">Дело закрыто</h2>
+            <p id="ending-text"></p>
+            <p class="reward-text" id="ending-reward"></p>
+            <button class="btn-primary" onclick="location.reload()">Пройти заново</button>
         </div>
-        <div class="divider"></div>
-        <div class="row">
-          <button class="btn danger" id="p-exit" data-i18n="pause.exit">Leave case</button>
-          <button class="btn primary" id="p-resume" data-i18n="pause.resume">Resume</button>
-        </div>
-      </div>
     </div>
-  </div>
 
-  <!-- Notebook -->
-  <div class="modal hidden" id="modal-notebook">
-    <div class="panel" style="height:min(420px,100%)">
-      <div class="panel-head">
-        <h2 data-i18n="nb.title">Clue Notebook</h2>
-        <div class="head-right"><button class="close-btn" data-close="modal-notebook" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div>
-      </div>
-      <div class="panel-body">
-        <div class="cols">
-          <div class="nb-col"><h3 data-i18n="nb.clues">Clues</h3><div id="nb-clues"></div></div>
-          <div class="nb-col"><h3 data-i18n="nb.notes">Notes &amp; keys</h3><div id="nb-notes"></div></div>
-        </div>
-      </div>
-    </div>
-  </div>
+    <canvas id="game-canvas"></canvas>
 
-  <!-- Safe keypad -->
-  <div class="modal hidden" id="modal-safe">
-    <div class="panel narrow">
-      <div class="panel-head">
-        <h2 data-i18n="safe.title">Director’s Safe</h2>
-        <div class="head-right"><button class="close-btn" data-close="modal-safe" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div>
-      </div>
-      <div class="panel-body">
-        <div id="safe-display"><i></i><i></i><i></i><i></i></div>
-        <div id="safe-pad">
-          <button class="btn" data-k="1">1</button><button class="btn" data-k="2">2</button><button class="btn" data-k="3">3</button>
-          <button class="btn" data-k="4">4</button><button class="btn" data-k="5">5</button><button class="btn" data-k="6">6</button>
-          <button class="btn" data-k="7">7</button><button class="btn" data-k="8">8</button><button class="btn" data-k="9">9</button>
-          <button class="btn" data-k="del">⌫</button><button class="btn" data-k="0">0</button><button class="btn primary" data-k="ok">OK</button>
-        </div>
-        <div id="safe-msg"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Result -->
-  <div class="modal hidden" id="modal-result">
-    <div class="panel narrow">
-      <div class="result-body">
-        <h3 id="res-title">Case closed</h3>
-        <p id="res-text"></p>
-        <div id="res-stats"></div>
-        <div id="res-reward"><span class="shard-icon"></span><span id="res-shards">0</span></div>
-        <div class="row">
-          <button class="btn" id="res-again" data-i18n="res.again">Play again</button>
-          <button class="btn primary" id="res-lobby" data-i18n="res.lobby">Back to Lobby</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Lobby → level transition -->
-  <div id="transition">
-    <div id="tr-title">Old Boarding School</div>
-    <div id="tr-sub">…</div>
-    <div id="tr-bar"><i></i></div>
-  </div>
-
-  <div id="toast"></div>
-</div>
-
-<!-- Portrait guard -->
-<div id="rotate-overlay">
-  <svg viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.2"/><path d="M11 18.5h2"/></svg>
-  <h2 data-i18n="rotate.title">Rotate your device horizontally</h2>
-  <p data-i18n="rotate.sub">The investigation is played in landscape mode.</p>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="game.js"></script>
+    <script src="story.js"></script>
+    <script src="game.js"></script>
 </body>
 </html>
