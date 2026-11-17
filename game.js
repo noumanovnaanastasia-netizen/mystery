@@ -22,22 +22,23 @@ function init3DWorld() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-    const hemiLight = new THREE.HemisphereLight(0x3b82f6, 0x1e293b, 0.35);
+    const hemiLight = new THREE.HemisphereLight(0x3b82f6, 0x1e293b, 0.4);
     scene.add(hemiLight);
 
-    ambientLamp = new THREE.PointLight(0xffedd5, 0.55, 14);
+    ambientLamp = new THREE.PointLight(0xffedd5, 0.6, 14);
     ambientLamp.position.set(0, 2.7, 0);
     scene.add(ambientLamp);
 
-    flashlight = new THREE.SpotLight(0xe0f2fe, 2.2, 22, Math.PI / 5.5, 0.4, 1);
+    flashlight = new THREE.SpotLight(0xe0f2fe, 2.4, 24, Math.PI / 5.5, 0.4, 1);
     flashlight.position.copy(camera.position);
     scene.add(flashlight);
     scene.add(flashlight.target);
 
-    const bodyGeo = new THREE.CylinderGeometry(0.28, 0.28, 1.5, 12);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8 });
+    const coatColor = (typeof selectedSkin !== 'undefined') ? selectedSkin : '#1d4ed8';
+    const bodyGeo = new THREE.CylinderGeometry(0.24, 0.36, 1.45, 16);
+    const bodyMat = new THREE.MeshStandardMaterial({ color: coatColor, roughness: 0.6 });
     playerMesh = new THREE.Mesh(bodyGeo, bodyMat);
-    playerMesh.position.set(0, 0.85, 5);
+    playerMesh.position.set(0, 0.75, 5);
     playerMesh.visible = false;
     scene.add(playerMesh);
 
@@ -54,7 +55,7 @@ function addBox(x, y, z, w, h, d, color, clueId = null, label = '') {
     scene.add(mesh);
 
     if (clueId) {
-        const ringGeo = new THREE.RingGeometry(0.15, 0.23, 16);
+        const ringGeo = new THREE.RingGeometry(0.14, 0.21, 20);
         const ringMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, side: THREE.DoubleSide });
         const marker = new THREE.Mesh(ringGeo, ringMat);
         marker.position.set(x, y + h / 2 + 0.35, z);
@@ -113,7 +114,9 @@ function setupControls() {
 
     joyZone.addEventListener('touchstart', e => {
         e.preventDefault();
-        joyTouchId = e.changedTouches[0].identifier;
+        if (e.changedTouches.length > 0) {
+            joyTouchId = e.changedTouches[0].identifier;
+        }
     });
 
     joyZone.addEventListener('touchmove', e => {
@@ -121,22 +124,22 @@ function setupControls() {
         for (let t of e.changedTouches) {
             if (t.identifier === joyTouchId) {
                 const rect = joyZone.getBoundingClientRect();
-                let dx = t.clientX - (rect.left + 60);
-                let dy = t.clientY - (rect.top + 60);
-                const dist = Math.min(Math.hypot(dx, dy), 40);
+                let dx = t.clientX - (rect.left + 58);
+                let dy = t.clientY - (rect.top + 58);
+                const dist = Math.min(Math.hypot(dx, dy), 38);
                 const angle = Math.atan2(dy, dx);
-                stick.style.left = (36 + Math.cos(angle) * dist) + 'px';
-                stick.style.top = (36 + Math.sin(angle) * dist) + 'px';
-                moveRight = (Math.cos(angle) * dist) / 40;
-                moveForward = -(Math.sin(angle) * dist) / 40;
+                stick.style.left = (35 + Math.cos(angle) * dist) + 'px';
+                stick.style.top = (35 + Math.sin(angle) * dist) + 'px';
+                moveRight = (Math.cos(angle) * dist) / 38;
+                moveForward = -(Math.sin(angle) * dist) / 38;
             }
         }
     });
 
     const resetJoy = () => {
         joyTouchId = null;
-        stick.style.left = '36px';
-        stick.style.top = '36px';
+        stick.style.left = '35px';
+        stick.style.top = '35px';
         moveForward = 0;
         moveRight = 0;
     };
@@ -147,10 +150,12 @@ function setupControls() {
     let lookTouchId = null, lastX = 0, lastY = 0;
 
     lookZone.addEventListener('touchstart', e => {
-        const t = e.changedTouches[0];
-        lookTouchId = t.identifier;
-        lastX = t.clientX;
-        lastY = t.clientY;
+        if (e.changedTouches.length > 0) {
+            const t = e.changedTouches[0];
+            lookTouchId = t.identifier;
+            lastX = t.clientX;
+            lastY = t.clientY;
+        }
     });
 
     lookZone.addEventListener('touchmove', e => {
@@ -183,7 +188,7 @@ function setSprint(val) { isSprint = val; }
 function toggleCameraMode() {
     isThirdPerson = !isThirdPerson;
     playerMesh.visible = isThirdPerson;
-    document.getElementById('btn-cam').textContent = isThirdPerson ? '👁️ 3-е' : '👁️ 1-е';
+    document.getElementById('cam-label').textContent = isThirdPerson ? '3P' : '1P';
 }
 
 function interactWithTarget() {
@@ -228,14 +233,13 @@ function animate() {
     currentTarget = null;
     interactables.forEach(item => {
         item.marker.rotation.z += 0.03;
-        const dist = playerMesh.position.distanceTo(item.mesh.position);
-        if (dist < 2.2) currentTarget = item;
+        if (playerMesh.position.distanceTo(item.mesh.position) < 2.2) currentTarget = item;
     });
 
     const prompt = document.getElementById('interact-prompt');
     if (currentTarget) {
         prompt.classList.remove('hidden');
-        document.getElementById('btn-interact').textContent = `✋ Осмотреть: ${currentTarget.label}`;
+        document.getElementById('btn-interact').textContent = `Осмотреть: ${currentTarget.label}`;
     } else {
         prompt.classList.add('hidden');
     }
