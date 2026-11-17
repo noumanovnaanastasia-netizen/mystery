@@ -3,38 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#070b14">
-    <title>ClueDusk — Дело №1</title>
+    <meta name="theme-color" content="#060911">
+    <title>ClueDusk</title>
+    <link rel="preconnect" href="https://googleapis.com">
+    <link href="https://googleapis.com/css2?family=Cinzel:wght@600;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://cloudflare.com"></script>
 </head>
 <body>
 
-    <!-- Предупреждение о горизонтальной ориентации -->
     <div id="rotate-screen">
-        <div class="rotate-icon">📱↻</div>
-        <h2>Поверните устройство горизонтально</h2>
-        <p>ClueDusk работает только в альбомном режиме</p>
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M12 18h.01"/></svg>
+        <h2>ПОВЕРНИТЕ ЭКРАН ГОРИЗОНТАЛЬНО</h2>
+        <p>Интерфейс ClueDusk оптимизирован для альбомного режима</p>
     </div>
 
-    <!-- Атмосферный титр в начале -->
+    <div id="main-lobby">
+        <canvas id="lobby-canvas"></canvas>
+
+        <header class="lobby-header">
+            <div class="brand-title">CLUE<span>DUSK</span> <small>v0.4 ALPHA</small></div>
+            <div class="profile-bar">
+                <div class="nickname-box" onclick="changeNickname()">
+                    <span id="player-nick">Detective_01</span>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                </div>
+                <div class="currency-pill">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 10h6M9 14h6"/></svg>
+                    <span id="lobby-coins">100</span>
+                </div>
+            </div>
+        </header>
+
+        <nav class="lobby-nav">
+            <button class="nav-item" onclick="openLobbyPanel('inventory')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Инвентарь и Скины
+            </button>
+            <button class="nav-item" onclick="openLobbyPanel('shop')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
+                Магазин Бюро
+            </button>
+            <button class="nav-item event-glow" onclick="openLobbyPanel('events')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4"/></svg>
+                Ивенты и Патчи
+            </button>
+        </nav>
+
+        <aside class="lobby-play-panel">
+            <div class="selector-group">
+                <label>РЕЖИМ РАССЛЕДОВАНИЯ</label>
+                <select id="mode-select" class="dark-select">
+                    <option value="case1">Дело №1: Сумма 397 620 (Детектив / Хоррор)</option>
+                    <option value="horror" disabled>Дело №2: Ночной Архив (Скоро)</option>
+                </select>
+            </div>
+
+            <div class="selector-group">
+                <label>УРОВЕНЬ СЛОЖНОСТИ</label>
+                <div class="diff-tabs">
+                    <button class="diff-btn active" onclick="setDiff(this, 'easy')">Сыщик</button>
+                    <button class="diff-btn" onclick="setDiff(this, 'normal')">Ветеран</button>
+                    <button class="diff-btn" onclick="setDiff(this, 'hard')">Кошмар</button>
+                </div>
+            </div>
+
+            <button class="btn-play-main" onclick="launchSelectedMode()">НАЧАТЬ РАССЛЕДОВАНИЕ</button>
+
+            <div class="multiplayer-row">
+                <button class="btn-mp" onclick="openLobbyPanel('create-room')">Создать комнату</button>
+                <button class="btn-mp" onclick="openLobbyPanel('join-room')">Найти комнату</button>
+            </div>
+        </aside>
+    </div>
+
+    <div id="lobby-modal" class="modal hidden">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 id="lobby-modal-title">Раздел</h3>
+                <button class="close-x" onclick="closeModal('lobby-modal')">✕</button>
+            </div>
+            <div id="lobby-modal-body"></div>
+        </div>
+    </div>
+
     <div id="intro-date" class="hidden">
         <p class="date-main">НОЯБРЬ. 01:40 НОЧИ</p>
         <p class="date-sub">Глухой посёлок на окраине области (12 домов)...</p>
     </div>
 
-    <!-- Диалог-предыстория -->
     <div id="dialogue-screen" class="hidden">
         <div class="dialogue-box">
             <div class="character-card">
-                <div class="avatar-silhouette">🕵️‍♂️</div>
+                <div class="silhouette-portrait">
+                    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.4"><circle cx="12" cy="8" r="4"/><path d="M5 20c1.5-4 12.5-4 14 0"/></svg>
+                </div>
                 <span id="speaker-name">Сергей (Заказчик)</span>
             </div>
             <div class="dialogue-content">
                 <p id="dialogue-text"></p>
                 <div class="dialogue-controls">
-                    <button id="btn-skip" class="btn-secondary">Пропустить (Skip)</button>
-                    <button id="btn-next" class="btn-primary">Дальше ➔</button>
+                    <button id="btn-skip" class="btn-secondary">Пропустить</button>
+                    <button id="btn-next" class="btn-primary">Дальше</button>
                 </div>
                 <div id="gender-choice" class="hidden">
                     <button class="btn-primary" onclick="startGame('male')">Хорошо, я понял</button>
@@ -44,24 +114,24 @@
         </div>
     </div>
 
-    <!-- Игровой интерфейс (HUD) -->
     <div id="game-hud" class="hidden">
         <div class="top-bar">
-            <div class="hud-badge">🔍 Улики: <span id="clue-count">0</span>/7</div>
-            <div class="hud-badge">💰 <span id="coins-count">100</span> ClueCoins</div>
+            <div class="hud-stats">
+                <div class="hud-badge">УЛИКИ <span id="clue-count">0</span>/7</div>
+                <div class="hud-badge"><span id="coins-count">100</span> CC</div>
+            </div>
             <div class="top-buttons">
-                <button class="hud-btn" onclick="openModal('notes-modal')">📓 Блокнот</button>
-                <button class="hud-btn" onclick="useHint()">💡 Подсказка (<span id="hint-free">5</span>)</button>
-                <button id="btn-verdict" class="hud-btn verdict-ready hidden" onclick="openVerdict()">⚖️ Вердикт</button>
+                <button class="hud-btn" onclick="openModal('notes-modal')">Блокнот</button>
+                <button class="hud-btn" onclick="useHint()">Подсказка (<span id="hint-free">5</span>)</button>
+                <button id="btn-verdict" class="hud-btn verdict-ready hidden" onclick="openVerdict()">Вердикт</button>
+                <button class="hud-btn" onclick="returnToLobby()">Меню</button>
             </div>
         </div>
 
-        <!-- Зона взаимодействия по центру -->
         <div id="interact-prompt" class="hidden">
-            <button id="btn-interact" onclick="interactWithTarget()">✋ Осмотреть</button>
+            <button id="btn-interact" onclick="interactWithTarget()">Осмотреть объект</button>
         </div>
 
-        <!-- Управление для планшета/телефона -->
         <div id="joystick-zone">
             <div id="joystick-base">
                 <div id="joystick-stick"></div>
@@ -71,57 +141,55 @@
         <div id="look-zone"></div>
 
         <div class="action-buttons">
-            <button id="btn-flashlight" class="circle-btn active" onclick="toggleFlashlight()">🔦</button>
-            <button id="btn-sprint" class="circle-btn" ontouchstart="setSprint(true)" ontouchend="setSprint(false)" onmousedown="setSprint(true)" onmouseup="setSprint(false)">🏃</button>
-            <button id="btn-cam" class="circle-btn" onclick="toggleCameraMode()">👁️ 1-е</button>
+            <button id="btn-flashlight" class="circle-btn active" onclick="toggleFlashlight()" title="Фонарик">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 6c0 2-2 2-2 4v10a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V10c0-2-2-2-2-4V2h12z"/><line x1="6" y1="6" x2="18" y2="6"/></svg>
+            </button>
+            <button id="btn-sprint" class="circle-btn" ontouchstart="setSprint(true)" ontouchend="setSprint(false)" onmousedown="setSprint(true)" onmouseup="setSprint(false)" title="Бег">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 4v6l4 2-2 6M10 14l-3 6M7 8l4-2 3 2"/></svg>
+            </button>
+            <button id="btn-cam" class="circle-btn" onclick="toggleCameraMode()" title="Вид камеры">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span id="cam-label">1P</span>
+            </button>
         </div>
     </div>
 
-    <!-- Всплывающее окно улики / подсказки -->
     <div id="clue-modal" class="modal hidden">
         <div class="modal-box">
-            <h3 id="modal-title">Найдена улика!</h3>
+            <h3 id="modal-title">Улика</h3>
             <p id="modal-desc"></p>
-            <button class="btn-primary" onclick="closeModal('clue-modal')">Записать в блокнот</button>
+            <button class="btn-primary" onclick="closeModal('clue-modal')">Записать в дело</button>
         </div>
     </div>
 
-    <!-- Блокнот детектива -->
     <div id="notes-modal" class="modal hidden">
         <div class="modal-box">
-            <h3>📓 Блокнот расследования</h3>
+            <h3>Материалы дела №1</h3>
             <div id="notes-list"></div>
             <button class="btn-secondary" onclick="closeModal('notes-modal')">Закрыть</button>
         </div>
     </div>
 
-    <!-- Окно выбора концовки (Вердикт) -->
     <div id="verdict-modal" class="modal hidden">
         <div class="modal-box">
-            <h3>⚖️ Вынести вердикт по делу №1</h3>
-            <p>Вы собрали достаточно улик. Кто и зачем забрал ровно 397 620 ₽?</p>
+            <h3>Вынесение вердикта</h3>
+            <p>Кто и зачем забрал ровно 397 620 ₽?</p>
             <div class="verdict-options">
-                <button class="verdict-btn" onclick="finishGame(1)">1. Случайные грабители с трассы, забрали всё, что успели унести.</button>
-                <button class="verdict-btn" onclick="finishGame(2)">2. Близкий сосед с соседнего участка: он знал код сейфа и взял точную сумму для закрытия своего долга (397 620 ₽).</button>
+                <button class="verdict-btn" onclick="finishGame(1)">1. Случайные грабители с трассы, забрали что попалось.</button>
+                <button class="verdict-btn" onclick="finishGame(2)">2. Сосед Виктор: знал код сейфа и взял точную сумму для закрытия долга (397 620 ₽).</button>
                 <button class="verdict-btn" onclick="finishGame(3)">3. Инсценировка самого Сергея ради страховки.</button>
             </div>
-            <button class="btn-secondary" onclick="closeModal('verdict-modal')">Ещё подумать</button>
+            <button class="btn-secondary" onclick="closeModal('verdict-modal')">Вернуться к поиску</button>
         </div>
     </div>
 
-    <!-- Экран концовки -->
     <div id="ending-screen" class="modal hidden">
         <div class="modal-box">
             <h2 id="ending-title">Дело закрыто</h2>
             <p id="ending-text"></p>
             <p class="reward-text" id="ending-reward"></p>
-            <button class="btn-primary" onclick="location.reload()">Пройти заново</button>
+            <button class="btn-primary" onclick="returnToLobby()">Вернуться в штаб</button>
         </div>
     </div>
 
-    <canvas id="game-canvas"></canvas>
-
-    <script src="story.js"></script>
-    <script src="game.js"></script>
-</body>
-</html>
+    <script src="menu.js"></script>
