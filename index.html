@@ -1,1 +1,403 @@
- 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b0a10">
+<title>Mystery Detective &amp; Horror Quest</title>
+<style>
+  :root {
+    --bg: #0b0a10;
+    --panel: rgba(22, 20, 32, 0.94);
+    --panel-2: rgba(38, 34, 54, 0.9);
+    --line: rgba(255, 255, 255, 0.12);
+    --text: #f2eefc;
+    --muted: #9d97b5;
+    --accent: #ffb23e;
+    --accent-2: #ff5d4d;
+    --good: #5fe39b;
+    --shard: #6fd8ff;
+    --sat: env(safe-area-inset-top, 0px);
+    --sar: env(safe-area-inset-right, 0px);
+    --sab: env(safe-area-inset-bottom, 0px);
+    --sal: env(safe-area-inset-left, 0px);
+    --pad: 14px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-user-select: none; user-select: none; overscroll-behavior: none;
+  }
+  #app { position: fixed; inset: 0; width: 100%; height: 100vh; height: 100dvh; overflow: hidden; }
+  #stage { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+  .hidden { display: none !important; }
+
+  /* ---------- Buttons ---------- */
+  button { font-family: inherit; color: inherit; border: 0; cursor: pointer; touch-action: manipulation; }
+  .btn {
+    min-height: 44px; padding: 10px 18px; border-radius: 12px; font-weight: 800; font-size: 15px;
+    background: var(--panel-2); border: 1px solid var(--line); transition: transform .08s ease, filter .15s ease;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn.primary { background: linear-gradient(180deg, #ffc863, #ff9a1f); color: #2a1600; border-color: #ffd98f; box-shadow: 0 4px 0 #b86a00, 0 8px 20px rgba(255,154,31,.3); }
+  .btn.danger { background: linear-gradient(180deg, #ff7a6b, #e0402f); border-color: #ff9e92; }
+  .btn.small { min-height: 36px; padding: 6px 12px; font-size: 13px; border-radius: 10px; }
+  .btn:disabled, .btn.disabled { opacity: .45; filter: grayscale(.5); pointer-events: none; }
+
+  /* ---------- HUD ---------- */
+  #hud { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+  #hud > * { pointer-events: auto; }
+  #hud-top {
+    position: absolute; top: calc(var(--sat) + 10px); left: calc(var(--sal) + var(--pad)); right: calc(var(--sar) + var(--pad));
+    display: flex; justify-content: space-between; align-items: center; gap: 10px; pointer-events: none;
+  }
+  .chip {
+    display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px;
+    background: var(--panel); border: 1px solid var(--line); font-weight: 800; font-size: 15px; backdrop-filter: blur(8px);
+    max-width: 55vw; pointer-events: auto;
+  }
+  .chip .avatar-dot { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent-2)); flex: none; }
+  #hud-nick { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .shard-icon {
+    width: 16px; height: 18px; flex: none; background: linear-gradient(135deg, #bff0ff, var(--shard) 55%, #2a95c4);
+    clip-path: polygon(50% 0, 100% 35%, 80% 100%, 20% 100%, 0 35%); filter: drop-shadow(0 0 4px rgba(111,216,255,.7));
+  }
+  #hud-shards { color: var(--shard); }
+
+  #hud-left {
+    position: absolute; left: calc(var(--sal) + var(--pad)); top: 50%; transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .icon-btn {
+    width: 58px; height: 58px; border-radius: 16px; background: var(--panel); border: 1px solid var(--line);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    backdrop-filter: blur(8px); transition: transform .08s ease;
+  }
+  .icon-btn:active { transform: scale(0.93); }
+  .icon-btn svg { width: 24px; height: 24px; stroke: var(--text); fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .icon-btn span { font-size: 9px; font-weight: 800; color: var(--muted); max-width: 54px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ---------- Action area (bottom-right) ---------- */
+  #action-area {
+    position: absolute; right: calc(var(--sar) + 18px); bottom: calc(var(--sab) + 18px);
+    width: min(300px, 46vw); min-width: 232px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .selector {
+    display: flex; align-items: center; gap: 6px; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 12px; padding: 4px; backdrop-filter: blur(8px);
+  }
+  .selector .sel-label { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 800; width: 52px; padding-left: 6px; flex: none; }
+  .selector .sel-value { flex: 1; text-align: center; font-weight: 800; font-size: 13px; line-height: 1.1; padding: 0 2px; }
+  .sel-arrow { width: 34px; height: 34px; border-radius: 9px; background: var(--panel-2); font-size: 18px; font-weight: 900; flex: none; line-height: 1; }
+  .sel-arrow:active { transform: scale(.92); }
+  #btn-play { width: 100%; min-height: 62px; font-size: 24px; letter-spacing: .04em; border-radius: 16px; margin-top: 2px; text-transform: uppercase; }
+
+  /* ---------- Rotate hint ---------- */
+  #drag-hint {
+    position: absolute; left: 50%; bottom: calc(var(--sab) + 16px); transform: translateX(-50%);
+    font-size: 12px; font-weight: 700; color: var(--muted); background: rgba(0,0,0,.4); padding: 6px 12px; border-radius: 999px;
+    pointer-events: none; transition: opacity .6s ease; white-space: nowrap;
+  }
+
+  /* ---------- Modals ---------- */
+  .modal {
+    position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+    background: rgba(5, 4, 10, 0.72); backdrop-filter: blur(6px);
+    padding: calc(var(--sat) + 10px) calc(var(--sar) + 12px) calc(var(--sab) + 10px) calc(var(--sal) + 12px);
+    animation: fade .18s ease;
+  }
+  #modal-onboarding { z-index: 40; background: radial-gradient(ellipse at 50% 30%, rgba(60,40,90,.85), rgba(5,4,10,.97)); }
+  @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes pop { from { transform: translateY(14px) scale(.97); opacity: 0; } to { transform: none; opacity: 1; } }
+  .panel {
+    width: min(680px, 100%); max-height: 100%; display: flex; flex-direction: column;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 20px; overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,.6); animation: pop .22s ease;
+  }
+  .panel.narrow { width: min(440px, 100%); }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px 12px 18px; border-bottom: 1px solid var(--line); flex: none; }
+  .panel-head h2 { margin: 0; font-size: 20px; font-weight: 900; }
+  .panel-head .head-right { display: flex; align-items: center; gap: 10px; }
+  .close-btn { width: 40px; height: 40px; border-radius: 12px; background: var(--panel-2); font-size: 20px; font-weight: 900; }
+  .panel-body { padding: 14px 18px 18px; overflow-y: auto; -webkit-overflow-scrolling: touch; flex: 1 1 auto; min-height: 0; }
+  .field-label { display: block; font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 12px 0 6px; }
+  .field-label:first-child { margin-top: 0; }
+  .text-input {
+    width: 100%; height: 48px; border-radius: 12px; border: 1px solid var(--line); background: rgba(0,0,0,.35);
+    color: var(--text); font-size: 17px; font-weight: 700; padding: 0 14px; outline: none; -webkit-user-select: text; user-select: text;
+  }
+  .text-input:focus { border-color: var(--accent); }
+  .error-text { color: var(--accent-2); font-size: 13px; font-weight: 700; min-height: 18px; margin-top: 6px; }
+  .row { display: flex; gap: 10px; }
+  .row > * { flex: 1; }
+  .subtitle { color: var(--muted); font-size: 14px; margin: 4px 0 10px; line-height: 1.4; }
+  .logo { font-size: 26px; font-weight: 900; text-align: center; margin: 0 0 4px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  .gender-btn, .seg-btn {
+    min-height: 72px; border-radius: 14px; background: var(--panel-2); border: 2px solid var(--line);
+    font-weight: 800; font-size: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  }
+  .gender-btn .gender-icon { font-size: 26px; line-height: 1; }
+  .gender-btn.active, .seg-btn.active, .tab-btn.active { border-color: var(--accent); background: rgba(255,178,62,.16); color: var(--accent); }
+  .seg-btn { min-height: 46px; flex-direction: row; font-size: 14px; }
+
+  /* ---------- Tabs ---------- */
+  .tabs { display: flex; gap: 6px; padding: 10px 14px 0; overflow-x: auto; flex: none; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn { flex: none; padding: 9px 14px; min-height: 40px; border-radius: 12px; background: var(--panel-2); border: 1px solid var(--line); font-weight: 800; font-size: 13px; white-space: nowrap; }
+
+  /* ---------- Item grids ---------- */
+  .item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(138px, 1fr)); gap: 10px; }
+  .item-card {
+    position: relative; display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 14px;
+    background: var(--panel-2); border: 1px solid var(--line);
+  }
+  .item-card.rarity-rare { border-color: rgba(111,216,255,.55); }
+  .item-card.rarity-epic { border-color: rgba(190,120,255,.65); }
+  .item-card.rarity-legendary { border-color: rgba(255,178,62,.8); box-shadow: 0 0 14px rgba(255,178,62,.18); }
+  .item-card.equipped { border-color: var(--good); background: rgba(95,227,155,.1); }
+  .item-icon { height: 58px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 32px; background: rgba(0,0,0,.28); }
+  .item-name { font-weight: 800; font-size: 13px; line-height: 1.2; }
+  .item-desc { font-size: 11px; color: var(--muted); line-height: 1.3; flex: 1; }
+  .item-tag { position: absolute; top: 6px; right: 6px; font-size: 9px; font-weight: 900; padding: 2px 6px; border-radius: 6px; background: #8fd3ff; color: #06202e; text-transform: uppercase; }
+  .item-tag.winter { background: #bfe9ff; }
+  .item-qty { font-size: 12px; font-weight: 800; color: var(--accent); }
+  .item-price { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .empty-state { text-align: center; color: var(--muted); padding: 30px 10px; font-weight: 700; font-size: 14px; grid-column: 1 / -1; }
+  .section-title { font-size: 12px; font-weight: 900; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin: 14px 0 8px; grid-column: 1 / -1; }
+
+  /* ---------- Settings ---------- */
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 0; font-weight: 800; }
+  .switch { position: relative; width: 56px; height: 32px; border-radius: 999px; background: #3a3650; border: 0; flex: none; transition: background .2s; }
+  .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; transition: transform .2s; }
+  .switch.on { background: var(--good); }
+  .switch.on::after { transform: translateX(24px); }
+  .divider { height: 1px; background: var(--line); margin: 12px 0; }
+
+  /* ---------- Play preview ---------- */
+  .preview-body { text-align: center; padding: 26px 22px 22px; }
+  .preview-body .case-icon { font-size: 54px; margin-bottom: 6px; filter: drop-shadow(0 0 14px rgba(255,93,77,.5)); }
+  .preview-body h3 { margin: 4px 0 6px; font-size: 24px; font-weight: 900; }
+  .preview-body p { color: var(--muted); margin: 4px 0; font-size: 14px; }
+  .preview-summary { display: inline-block; text-align: left; margin: 12px 0 16px; padding: 10px 14px; background: rgba(0,0,0,.3); border-radius: 12px; font-size: 13px; font-weight: 700; line-height: 1.7; }
+  .preview-summary b { color: var(--accent); }
+
+  /* ---------- Toast ---------- */
+  #toast {
+    position: absolute; left: 50%; top: calc(var(--sat) + 64px); transform: translate(-50%, -20px); z-index: 60;
+    background: var(--panel); border: 1px solid var(--line); padding: 10px 18px; border-radius: 999px;
+    font-weight: 800; font-size: 14px; opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; max-width: 90vw; text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translate(-50%, 0); }
+  #toast.error { border-color: var(--accent-2); color: #ffb3aa; }
+  #toast.success { border-color: var(--good); color: var(--good); }
+
+  /* ---------- Loading ---------- */
+  #loading { position: absolute; inset: 0; z-index: 80; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; transition: opacity .4s ease; }
+  #loading.done { opacity: 0; pointer-events: none; }
+  .spinner { width: 42px; height: 42px; border-radius: 50%; border: 4px solid rgba(255,255,255,.12); border-top-color: var(--accent); animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading-text { color: var(--muted); font-weight: 700; font-size: 14px; }
+
+  /* ---------- Small / landscape-phone tuning ---------- */
+  @media (max-height: 460px) {
+    :root { --pad: 10px; }
+    .icon-btn { width: 50px; height: 50px; border-radius: 14px; }
+    .icon-btn span { display: none; }
+    #hud-left { gap: 8px; }
+    #action-area { gap: 5px; width: min(270px, 44vw); }
+    .selector .sel-label { font-size: 8px; width: 46px; }
+    .sel-arrow { width: 30px; height: 30px; }
+    #btn-play { min-height: 52px; font-size: 20px; }
+    .panel-head { padding: 8px 10px 8px 14px; }
+    .panel-head h2 { font-size: 17px; }
+    .panel-body { padding: 10px 14px 14px; }
+    .gender-btn { min-height: 56px; }
+    .logo { font-size: 20px; }
+  }
+  @media (max-width: 520px) and (orientation: portrait) {
+    #action-area { left: calc(var(--sal) + 14px); right: calc(var(--sar) + 14px); width: auto; min-width: 0; }
+    #hud-left { top: auto; bottom: calc(var(--sab) + 250px); transform: none; flex-direction: row; }
+    #drag-hint { display: none; }
+    .item-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- 3D stage -->
+  <canvas id="stage"></canvas>
+
+  <!-- Loading -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <div id="loading-text">Loading…</div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="hud-top">
+      <div class="chip" id="hud-profile"><span class="avatar-dot"></span><span id="hud-nick">Detective</span></div>
+      <div class="chip" id="hud-currency"><span class="shard-icon"></span><span id="hud-shards">500</span></div>
+    </div>
+
+    <div id="hud-left">
+      <button class="icon-btn" id="btn-shop" aria-label="Shop">
+        <svg viewBox="0 0 24 24"><path d="M3 9l1.5-5h15L21 9"/><path d="M4 9v11h16V9"/><path d="M3 9c0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0 0 2 3 2 3 0"/><path d="M10 20v-5h4v5"/></svg>
+        <span data-i18n="hud.shop">Shop</span>
+      </button>
+      <button class="icon-btn" id="btn-inventory" aria-label="Inventory">
+        <svg viewBox="0 0 24 24"><path d="M8 7V5a4 4 0 0 1 8 0v2"/><path d="M5 7h14l1 13H4z"/><path d="M9 12h6"/></svg>
+        <span data-i18n="hud.inventory">Inventory</span>
+      </button>
+      <button class="icon-btn" id="btn-settings" aria-label="Settings">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h0a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5h0a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v0a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+        <span data-i18n="hud.settings">Settings</span>
+      </button>
+    </div>
+
+    <div id="drag-hint" data-i18n="hud.dragHint">Drag to rotate</div>
+
+    <div id="action-area">
+      <div class="selector" data-selector="difficulty">
+        <span class="sel-label" data-i18n="sel.difficulty">Difficulty</span>
+        <button class="sel-arrow sel-prev" aria-label="Previous">‹</button>
+        <span class="sel-value" id="sel-difficulty-value">Easy</span>
+        <button class="sel-arrow sel-next" aria-label="Next">›</button>
+      </div>
+      <div class="selector" data-selector="mode">
+        <span class="sel-label" data-i18n="sel.mode">Mode</span>
+        <button class="sel-arrow sel-prev" aria-label="Previous">‹</button>
+        <span class="sel-value" id="sel-mode-value">Solo</span>
+        <button class="sel-arrow sel-next" aria-label="Next">›</button>
+      </div>
+      <div class="selector" data-selector="map">
+        <span class="sel-label" data-i18n="sel.map">Map</span>
+        <button class="sel-arrow sel-prev" aria-label="Previous">‹</button>
+        <span class="sel-value" id="sel-map-value">Old Boarding School</span>
+        <button class="sel-arrow sel-next" aria-label="Next">›</button>
+      </div>
+      <button class="btn primary" id="btn-play" data-i18n="hud.play">PLAY</button>
+    </div>
+  </div>
+
+  <!-- Onboarding -->
+  <div class="modal hidden" id="modal-onboarding">
+    <div class="panel narrow">
+      <div class="panel-body">
+        <h1 class="logo" data-i18n="onboarding.title">Mystery Detective</h1>
+        <p class="subtitle" style="text-align:center" data-i18n="onboarding.subtitle">Create your detective to begin the investigation.</p>
+        <label class="field-label" for="onb-nick" data-i18n="onboarding.nickname">Nickname</label>
+        <input class="text-input" id="onb-nick" type="text" maxlength="14" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Detective">
+        <div class="field-label" data-i18n="onboarding.gender">Gender</div>
+        <div class="row" id="onb-gender">
+          <button class="gender-btn active" data-gender="female"><span class="gender-icon">♀</span><span data-i18n="gender.female">Female</span></button>
+          <button class="gender-btn" data-gender="male"><span class="gender-icon">♂</span><span data-i18n="gender.male">Male</span></button>
+        </div>
+        <div class="error-text" id="onb-error"></div>
+        <button class="btn primary" id="onb-start" style="width:100%;margin-top:6px;min-height:52px;font-size:17px" data-i18n="onboarding.start">Start Investigation</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shop -->
+  <div class="modal hidden" id="modal-shop">
+    <div class="panel" style="height:min(560px,100%)">
+      <div class="panel-head">
+        <h2 data-i18n="shop.title">Shop</h2>
+        <div class="head-right">
+          <div class="chip" style="padding:5px 12px"><span class="shard-icon"></span><span id="shop-balance" style="color:var(--shard)">500</span></div>
+          <button class="close-btn" data-close="modal-shop" aria-label="Close">✕</button>
+        </div>
+      </div>
+      <div class="tabs" id="shop-tabs">
+        <button class="tab-btn active" data-tab="outfits" data-i18n="shop.tab.outfits">Outfits</button>
+        <button class="tab-btn" data-tab="hair" data-i18n="shop.tab.hair">Hair &amp; Hats</button>
+        <button class="tab-btn" data-tab="accessories" data-i18n="shop.tab.accessories">Accessories</button>
+        <button class="tab-btn" data-tab="boosters" data-i18n="shop.tab.boosters">Boosters</button>
+      </div>
+      <div class="panel-body"><div class="item-grid" id="shop-grid"></div></div>
+    </div>
+  </div>
+
+  <!-- Inventory / Wardrobe -->
+  <div class="modal hidden" id="modal-inventory">
+    <div class="panel" style="height:min(560px,100%)">
+      <div class="panel-head">
+        <h2 data-i18n="inv.title">Inventory</h2>
+        <div class="head-right">
+          <button class="close-btn" data-close="modal-inventory" aria-label="Close">✕</button>
+        </div>
+      </div>
+      <div class="tabs" id="inv-tabs">
+        <button class="tab-btn active" data-tab="outfits" data-i18n="shop.tab.outfits">Outfits</button>
+        <button class="tab-btn" data-tab="hair" data-i18n="shop.tab.hair">Hair &amp; Hats</button>
+        <button class="tab-btn" data-tab="accessories" data-i18n="shop.tab.accessories">Accessories</button>
+        <button class="tab-btn" data-tab="boosters" data-i18n="shop.tab.boosters">Boosters</button>
+      </div>
+      <div class="panel-body"><div class="item-grid" id="inv-grid"></div></div>
+    </div>
+  </div>
+
+  <!-- Settings -->
+  <div class="modal hidden" id="modal-settings">
+    <div class="panel narrow" style="max-height:100%">
+      <div class="panel-head">
+        <h2 data-i18n="settings.title">Settings</h2>
+        <div class="head-right"><button class="close-btn" data-close="modal-settings" aria-label="Close">✕</button></div>
+      </div>
+      <div class="panel-body">
+        <div class="field-label" data-i18n="settings.language">Language</div>
+        <div class="row" id="set-lang">
+          <button class="seg-btn" data-lang="en">English</button>
+          <button class="seg-btn" data-lang="ru">Русский</button>
+        </div>
+
+        <div class="divider"></div>
+        <div class="toggle-row">
+          <span data-i18n="settings.sound">Sound</span>
+          <button class="switch on" id="toggle-sound" role="switch" aria-checked="true" aria-label="Sound"></button>
+        </div>
+
+        <div class="divider"></div>
+        <label class="field-label" for="set-nick" data-i18n="settings.nickname">Nickname</label>
+        <div class="row">
+          <input class="text-input" id="set-nick" type="text" maxlength="14" autocomplete="off" spellcheck="false" style="flex:1">
+          <button class="btn primary small" id="btn-save-nick" style="flex:none;min-width:84px" data-i18n="settings.save">Save</button>
+        </div>
+        <div class="error-text" id="set-error"></div>
+
+        <div class="field-label" data-i18n="settings.gender">Gender</div>
+        <div class="row" id="set-gender">
+          <button class="seg-btn" data-gender="female">♀ <span data-i18n="gender.female">Female</span></button>
+          <button class="seg-btn" data-gender="male">♂ <span data-i18n="gender.male">Male</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Play preview -->
+  <div class="modal hidden" id="modal-play">
+    <div class="panel narrow">
+      <div class="preview-body">
+        <div class="case-icon">🔦</div>
+        <h3 data-i18n="play.title">Case #1 Ready</h3>
+        <p data-i18n="play.subtitle">Coming in Step 2</p>
+        <div class="preview-summary" id="play-summary"></div>
+        <button class="btn primary" id="btn-play-close" style="width:100%" data-i18n="play.back">Back to Lobby</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
