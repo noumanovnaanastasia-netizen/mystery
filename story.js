@@ -1,4 +1,4 @@
- const DIALOGUE_LINES = [
+const DIALOGUE_LINES = [
     "Здравствуйте, детектив... Спасибо, что приехали даже глубокой ночью. Нам с женой Наташей по 33–36 лет, у нас двое детей — сын и дочь, оба учатся на пятёрки.",
     "Мы жили в этом тихом одноэтажном доме на окраине посёлка, где всего 12 домов. Четыре года откладывали по пару тысяч на обучение детей и подушку безопасности. Накопили ровно 880 000 рублей.",
     "В ноябре мы улетели в отпуск в Таиланд. Я взял из встроенного сейфа в шкафу 380 000 ₽ на поездку. В сейфе оставалось ровно 500 000 ₽.",
@@ -60,13 +60,9 @@ let coins = 100;
 let playerGender = 'male';
 
 window.onload = () => {
-    const intro = document.getElementById('intro-date');
-    intro.classList.remove('hidden');
-    setTimeout(() => {
-        intro.classList.add('hidden');
-        document.getElementById('dialogue-screen').classList.remove('hidden');
-        typeLine(DIALOGUE_LINES[0]);
-    }, 4300);
+    if (typeof initLobby3D === 'function') {
+        initLobby3D();
+    }
 };
 
 function typeLine(text) {
@@ -78,7 +74,7 @@ function typeLine(text) {
         el.textContent += text[i];
         i++;
         if (i >= text.length) clearInterval(typingInterval);
-    }, 22);
+    }, 20);
 }
 
 document.getElementById('btn-next').onclick = () => {
@@ -116,7 +112,7 @@ function registerClue(clueId) {
     foundClues.add(clueId);
 
     document.getElementById('clue-count').textContent = foundClues.size;
-    document.getElementById('modal-title').textContent = isNew ? '🔍 Новая улика!' : '📋 Повторный осмотр';
+    document.getElementById('modal-title').textContent = isNew ? 'Зафиксирована новая улика' : 'Повторный осмотр';
     document.getElementById('modal-desc').textContent = `${clue.title}\n\n${clue.desc}`;
     openModal('clue-modal');
 
@@ -129,7 +125,7 @@ function registerClue(clueId) {
 function updateNotes() {
     const list = document.getElementById('notes-list');
     if (foundClues.size === 0) {
-        list.innerHTML = '<p>Пока улик нет. Осматривайте предметы в доме и во дворе с фонариком.</p>';
+        list.innerHTML = '<p>Материалы пусты. Осматривайте подозрительные объекты в доме и во дворе.</p>';
         return;
     }
     list.innerHTML = '';
@@ -143,7 +139,7 @@ function updateNotes() {
 function useHint() {
     const unfound = CLUES_DATA.find(c => !foundClues.has(c.id));
     if (!unfound) {
-        alert('Вы уже нашли все 7 улик! Нажмите кнопку «Вердикт» сверху.');
+        alert('Все 7 улик найдены. Вы можете вынести вердикт.');
         return;
     }
 
@@ -154,11 +150,11 @@ function useHint() {
         coins -= 25;
         document.getElementById('coins-count').textContent = coins;
     } else {
-        alert('Недостаточно ClueCoins для подсказки!');
+        alert('Недостаточно ClueCoins для подсказки.');
         return;
     }
 
-    document.getElementById('modal-title').textContent = '💡 Подсказка интуиции';
+    document.getElementById('modal-title').textContent = 'Анализ интуиции';
     document.getElementById('modal-desc').textContent = unfound.hint;
     openModal('clue-modal');
 }
@@ -174,17 +170,17 @@ function finishGame(choice) {
     const reward = document.getElementById('ending-reward');
 
     if (choice === 2 && foundClues.size >= 6) {
-        title.textContent = '🏆 ИДЕАЛЬНАЯ КОНЦОВКА: Дело раскрыто!';
-        text.textContent = 'Вы сопоставили все факты: сосед Виктор знал код сейфа, подсмотрев его в гостях, и забрал ровно 397 620 ₽, чтобы закрыть свой долг. Деньги возвращены семье, а вы стали легендой ClueDusk!';
+        title.textContent = 'ИДЕАЛЬНОЕ РАССЛЕДОВАНИЕ: Дело закрыто';
+        text.textContent = 'Вы сопоставили все факты: сосед Виктор знал код сейфа, подсмотрев его в гостях, и забрал ровно 397 620 ₽ для закрытия долга. Средства возвращены семье.';
         reward.textContent = 'Награда: +150 ClueCoins';
     } else if (choice === 2) {
-        title.textContent = '✅ ХОРОШАЯ КОНЦОВКА: Верный след';
-        text.textContent = 'Вы правильно вычислили соседа, но из-за нехватки 1–2 улик часть денег он успел потратить. Семья всё равно благодарна вам за правду!';
+        title.textContent = 'ДЕЛО РАСКРЫТО: Верный след';
+        text.textContent = 'Вы верно вычислили соседа, но из-за нехватки 1–2 улик часть суммы он успел потратить. Семья благодарна вам за правду.';
         reward.textContent = 'Награда: +80 ClueCoins';
     } else {
-        title.textContent = '❌ ПЛОХАЯ КОНЦОВКА: Ложный след';
-        text.textContent = 'Полиция пошла по неверному следу, а настоящий вор с соседнего участка скрылся с деньгами семьи в ночи...';
-        reward.textContent = 'Награда: +20 ClueCoins за попытку';
+        title.textContent = 'ОШИБКА СЛЕДСТВИЯ: Ложный след';
+        text.textContent = 'Следствие пошло по неверному пути, а настоящий грабитель с соседнего участка скрылся с деньгами семьи...';
+        reward.textContent = 'Компенсация: +20 ClueCoins';
     }
     openModal('ending-screen');
 }
